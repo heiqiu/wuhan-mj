@@ -29,6 +29,8 @@ class MajiangTrainingApp {
   }
   
   bindEvents() {
+    console.log('🔗 开始绑定事件...');
+    
     // 开始新训练
     document.getElementById('btn-new-session').addEventListener('click', () => {
       const difficulty = document.getElementById('difficulty-select').value;
@@ -36,6 +38,7 @@ class MajiangTrainingApp {
       this.startTimer();
       this.hideHint();
     });
+    console.log('✅ btn-new-session 事件已绑定');
     
     // 整理手牌
     document.getElementById('btn-sort-hand').addEventListener('click', () => {
@@ -56,10 +59,20 @@ class MajiangTrainingApp {
     });
     
     // 下一轮
-    document.getElementById('btn-next-round').addEventListener('click', () => {
-      this.gameState.completeRound();
-      this.startTimer();
-    });
+    const btnNextRound = document.getElementById('btn-next-round');
+    console.log('🔍 查找 btn-next-round 元素:', btnNextRound);
+    
+    if (btnNextRound) {
+      btnNextRound.addEventListener('click', () => {
+        console.log('▶️ 点击下一轮按钮');
+        this.gameState.completeRound();
+        this.startTimer();
+        console.log('✅ 已开始下一轮');
+      });
+      console.log('✅ btn-next-round 事件已绑定');
+    } else {
+      console.error('❌ 找不到 btn-next-round 元素！');
+    }
     
     // 保存会话
     document.getElementById('btn-save-session').addEventListener('click', () => {
@@ -91,6 +104,7 @@ class MajiangTrainingApp {
     
     // 重新选择按钮
     document.getElementById('btn-reselect').addEventListener('click', () => {
+      console.log('🔄 点击重新选择按钮');
       // 隐藏分析面板
       this.analysisPanel.hide();
       // 恢复到选牌状态

@@ -18,7 +18,8 @@ class ScoringSystem {
       score: 0,
       rank: 0,
       feedback: '',
-      improvement: []
+      improvement: [],
+      comparison: null // 添加详细对比
     };
     
     // 找到用户选择的排名
@@ -54,6 +55,15 @@ class ScoringSystem {
       );
     }
     
+    // 生成详细对比（如果有详细分析数据）
+    if (bestSolution.detailedAnalysis) {
+      result.comparison = this.generateDetailedComparison(
+        userChoice, 
+        bestSolution.bestDiscard, 
+        bestSolution.detailedAnalysis
+      );
+    }
+    
     return result;
   }
   
@@ -85,6 +95,111 @@ class ScoringSystem {
     });
     
     return suggestions;
+  }
+  
+  /**
+   * 生成详细的牌效对比（融合武汉麻将技巧）
+   */
+  generateDetailedComparison(userChoice, bestChoice, detailedAnalysis) {
+    const userAnalysis = detailedAnalysis[userChoice];
+    const bestAnalysis = detailedAnalysis[bestChoice];
+    
+    if (!userAnalysis || !bestAnalysis) {
+      return null;
+    }
+    
+    const comparison = {
+      summary: '',
+      details: [],
+      tips: [], // 添加技巧提示
+      conclusion: ''
+    };
+    
+    // 生成总结
+    if (userChoice === bestChoice) {
+      comparison.summary = '🎉 你的选择与最优解一致！';
+    } else {
+      comparison.summary = `🔍 对比分析: ${TileUtils.getTileText(userChoice)} vs ${TileUtils.getTileText(bestChoice)}`;
+    }
+    
+    // 详细对比各项指标
+    
+    // 1. 向听数对比
+    if (userAnalysis.shanten !== bestAnalysis.shanten) {
+      const diff = userAnalysis.shanten - bestAnalysis.shanten;
+      if (diff > 0) {
+        comparison.details.push(`⚠️ 向听数: 你的选择${userAnalysis.shanten}向听，最优解${bestAnalysis.shanten}向听，相差${diff}张`);
+        comparison.tips.push('▶ 听牌口诀:“早听要听好、晚听要听早” - 尽量减少向听数');
+      } else {
+        comparison.details.push(`✅ 向听数: 两者都是${userAnalysis.shanten}向听`);
+      }
+    } else {
+      comparison.details.push(`✅ 向听数: 两者相同，均为${userAnalysis.shanten}向听`);
+    }
+    
+    // 2. 进张数对比（听牌效率）
+    if (userAnalysis.waitingTiles !== bestAnalysis.waitingTiles) {
+      const diff = bestAnalysis.waitingTiles - userAnalysis.waitingTiles;
+      if (diff > 0) {
+        comparison.details.push(`⚠️ 进张效率: 你的选择有${userAnalysis.waitingTiles}种有效进张，最优解有${bestAnalysis.waitingTiles}种，多${diff}种`);
+        comparison.tips.push('▶ 拆搭原则:“拆小不拆大” - 优先拆掉进张少的搭子，保留进张多的搭子');
+      } else if (diff < 0) {
+        comparison.details.push(`✅ 进张效率: 你的选择更优，有${userAnalysis.waitingTiles}种有效进张`);
+      } else {
+        comparison.details.push(`✅ 进张效率: 两者相同，均有${userAnalysis.waitingTiles}种有效进张`);
+      }
+    } else {
+      comparison.details.push(`✅ 进张效率: 两者相同，均有${userAnalysis.waitingTiles}种有效进张`);
+    }
+    
+    // 3. 搭子数对比
+    if (userAnalysis.partnerships !== bestAnalysis.partnerships) {
+      const diff = bestAnalysis.partnerships - userAnalysis.partnerships;
+      if (diff > 0) {
+        comparison.details.push(`⚠️ 搭子数量: 你的选择有${userAnalysis.partnerships}个搭子，最优解有${bestAnalysis.partnerships}个，多${diff}个`);
+        comparison.tips.push('▶ 五搭黄金法则:胡牌只需要五搭牌，超过五搭必须立即拆搭');
+      } else {
+        comparison.details.push(`✅ 搭子数量: 两者相当`);
+      }
+    }
+    
+    // 4. 孤张数对比
+    if (userAnalysis.isolatedCount !== bestAnalysis.isolatedCount) {
+      const diff = userAnalysis.isolatedCount - bestAnalysis.isolatedCount;
+      if (diff > 0) {
+        comparison.details.push(`⚠️ 孤张数量: 你的选择有${userAnalysis.isolatedCount}个孤张，最优解有${bestAnalysis.isolatedCount}个，多${diff}个`);
+        comparison.tips.push('▶ 孤张处理:孤张优先打出，留牌价值低，无法组成搭子');
+      } else {
+        comparison.details.push(`✅ 孤张数量: 你的选择更好，孤张更少`);
+      }
+    }
+    
+    // 5. 牌型质量对比
+    const qualityDiff = bestAnalysis.handQuality - userAnalysis.handQuality;
+    if (qualityDiff > 10) {
+      comparison.details.push(`⚠️ 牌型质量: 最优解牌型质量更高（${bestAnalysis.handQuality.toFixed(0)} vs ${userAnalysis.handQuality.toFixed(0)}）`);
+      comparison.tips.push('▶ 拆搭口诀:“边卡先拆、两面为王、对子多余、早拆不慥”');
+    } else if (qualityDiff < -10) {
+      comparison.details.push(`✅ 牌型质量: 你的选择牌型质量更高`);
+    } else {
+      comparison.details.push(`✅ 牌型质量: 两者相当`);
+    }
+    
+    // 生成结论
+    if (userChoice === bestChoice) {
+      comparison.conclusion = '你的判断非常准确！继续保持！';
+    } else {
+      const majorDiffs = comparison.details.filter(d => d.startsWith('⚠️')).length;
+      if (majorDiffs >= 3) {
+        comparison.conclusion = '最优解在多个方面都更优，建议重点学习拆搭原则:“拆小不拆大、拆边不拆卡、拆对不拆嵌”';
+      } else if (majorDiffs >= 2) {
+        comparison.conclusion = '最优解在部分方面更优，注意听牌口选择:“多口听一条线”，提升50%概率';
+      } else {
+        comparison.conclusion = '两者差异不大，你的选择也是合理的，继续保持';
+      }
+    }
+    
+    return comparison;
   }
   
   /**

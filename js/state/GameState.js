@@ -158,19 +158,82 @@ class GameState {
    * 完成本轮,开始下一轮
    */
   completeRound() {
+    console.log('🎯 completeRound 被调用');
+    
     // 保存到历史
     this.state.session.rounds.push({
       ...this.state.currentRound
     });
+    console.log('💾 本轮已保存到历史');
     
     this.state.session.totalScore += this.state.currentRound.score;
+    console.log('🎯 总分更新:', this.state.session.totalScore);
     
     // 重置UI
     this.state.ui.showAnalysis = false;
     this.state.ui.selectedTile = null;
+    console.log('🔄 UI已重置');
     
-    // 开始新轮
-    this.startNewRound();
+    // 继续下一轮：只替换打出去的牌，不重新发牌
+    this.continueNextRound();
+    console.log('✅ 已开始下一轮');
+  }
+  
+  /**
+   * 继续下一轮：基于当前手牌，只替换打出的牌
+   */
+  continueNextRound() {
+    console.log('🎯 continueNextRound 被调用');
+    
+    const { userDiscard, currentHand, indicatorTile, piziTiles, laiziTiles } = this.state.currentRound;
+    
+    if (!userDiscard) {
+      console.error('❌ 没有打出的牌，无法继续');
+      // 如果没有打牌记录，则重新开始
+      this.startNewRound();
+      return;
+    }
+    
+    // 从当前手牌中移除打出的牌
+    const newHand = [...currentHand];
+    const discardIndex = newHand.indexOf(userDiscard);
+    if (discardIndex !== -1) {
+      newHand.splice(discardIndex, 1);
+    }
+    console.log('📋 打出', userDiscard, '，剩余', newHand.length, '张牌');
+    
+    // 摸一张新牌
+    const newDrawnTile = this.generator.drawTile(newHand);
+    console.log('🎲 摸到新牌:', newDrawnTile);
+    
+    // 更新状态
+    this.state.currentRound = {
+      roundNumber: this.state.currentRound.roundNumber + 1,
+      initialHand: [...newHand],
+      drawnTile: newDrawnTile,
+      currentHand: [...newHand, newDrawnTile],
+      userDiscard: null,
+      userDiscardIndex: null,
+      bestDiscard: null,
+      score: 0,
+      scoreResult: null,
+      bestSolution: null,
+      startTime: Date.now(),
+      timeSpent: 0,
+      hasGang: false,
+      canGang: false,
+      // 保持相同的指示牌、皮子、赖子
+      indicatorTile: indicatorTile,
+      piziTiles: piziTiles,
+      laiziTiles: laiziTiles,
+      hasOpened: false // 重置开口状态
+    };
+    
+    // 检查是否可以杠牌
+    this.checkCanGang();
+    
+    console.log('✅ 下一轮准备完成');
+    this.notify();
   }
   
   /**
