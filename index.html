@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🀄 武汉麻将拆搭训练系统</title>
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+  <div id="app">
+    <!-- 顶部标题栏 -->
+    <header class="app-header">
+      <h1>🀄 武汉麻将拆搭训练系统</h1>
+      <div class="header-stats">
+        <span>本轮得分: <strong id="round-score">--</strong></span>
+        <span>总分: <strong id="total-score">0</strong></span>
+        <span>平均: <strong id="avg-score">--</strong></span>
+        <span>等级: <strong id="level-display">--</strong></span>
+      </div>
+    </header>
+    
+    <!-- 控制面板 -->
+    <div class="control-panel">
+      <button id="btn-new-session" class="btn btn-primary">🎮 开始新训练</button>
+      <select id="difficulty-select" class="select">
+        <option value="easy">简单 (1-2向听)</option>
+        <option value="medium" selected>中等 (2-3向听)</option>
+        <option value="hard">困难 (3+向听)</option>
+      </select>
+      <button id="btn-history" class="btn">📊 查看历史</button>
+      <button id="btn-help" class="btn">❓ 帮助</button>
+    </div>
+    
+    <!-- 主游戏区域 -->
+    <main class="game-area">
+      <!-- 指示牌信息显示 -->
+      <div id="indicator-info" class="indicator-info" style="display: none;">
+        <div>🎴 指示牌: <span id="indicator-tile-text">--</span></div>
+        <div>🟥 皮子: <span id="pizi-tiles-text">--</span></div>
+        <div>🟦 赖子: <span id="laizi-tiles-text">--</span></div>
+      </div>
+      
+      <!-- 手牌显示 -->
+      <div class="hand-section">
+        <div class="section-label">
+          <span>手牌 (点击要打出的牌)</span>
+          <div class="hand-actions">
+            <button id="btn-sort-hand" class="btn btn-small">📋 整理手牌</button>
+            <button id="btn-gang" class="btn btn-small hidden">🀄 杠红中</button>
+            <span class="timer">⏱️ <span id="timer-display">00:00</span></span>
+          </div>
+        </div>
+        <div class="tiles-wrapper">
+          <div id="hand-tiles" class="tile-container"></div>
+          <div id="drawn-tile" class="tile-slot" style="display: none;"></div>
+        </div>
+      </div>
+      
+      <!-- 提示信息 -->
+      <div id="hint-area" class="hint-area hidden">
+        <div class="hint-content">
+          <span id="hint-text"></span>
+        </div>
+      </div>
+    </main>
+    
+    <!-- 分析结果面板 -->
+    <aside id="analysis-panel" class="analysis-panel hidden">
+      <div class="panel-header">
+        <h2>🎯 本轮分析结果</h2>
+        <button id="btn-close-analysis" class="btn-close">×</button>
+      </div>
+      
+      <div class="panel-content">
+        <!-- 得分显示 -->
+        <div class="score-display">
+          <div class="score-circle" id="score-circle">
+            <span class="score-value" id="score-value">--</span>
+            <span class="score-label">分</span>
+          </div>
+          <p class="score-feedback" id="score-feedback"></p>
+        </div>
+        
+        <!-- 对比展示 -->
+        <div class="comparison">
+          <div class="choice-item user-choice">
+            <h3>你的选择</h3>
+            <div class="choice-tile">
+              <div id="user-choice-tile" class="tile"></div>
+            </div>
+            <p class="choice-info" id="user-choice-rank"></p>
+          </div>
+          
+          <div class="vs-divider">VS</div>
+          
+          <div class="choice-item best-choice">
+            <h3>最优选择</h3>
+            <div class="choice-tile">
+              <div id="best-choice-tile" class="tile"></div>
+            </div>
+            <p class="choice-info" id="best-choice-reason"></p>
+          </div>
+        </div>
+        
+        <!-- 所有选项排名 -->
+        <div class="alternatives-section">
+          <h3>📋 所有选项排名</h3>
+          <div id="alternatives-list" class="alternatives-list"></div>
+        </div>
+        
+        <!-- 改进建议 -->
+        <div class="improvement-section">
+          <h3>💡 改进建议</h3>
+          <ul id="improvement-list" class="improvement-list"></ul>
+        </div>
+        
+        <!-- 操作按钮 -->
+        <div class="panel-actions">
+          <button id="btn-reselect" class="btn btn-secondary">🔄 重新选择</button>
+          <button id="btn-next-round" class="btn btn-primary">▶️ 下一轮</button>
+          <button id="btn-save-session" class="btn">💾 保存记录</button>
+        </div>
+      </div>
+    </aside>
+    
+    <!-- 历史记录面板 -->
+    <aside id="history-panel" class="history-panel hidden">
+      <div class="panel-header">
+        <h2>📊 训练历史</h2>
+        <button id="btn-close-history" class="btn-close">×</button>
+      </div>
+      
+      <div class="panel-content">
+        <div class="session-summary">
+          <div class="summary-item">
+            <span class="label">训练场次:</span>
+            <span class="value" id="rounds-count">0</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">平均得分:</span>
+            <span class="value" id="history-avg-score">--</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">平均用时:</span>
+            <span class="value" id="history-avg-time">--</span>秒
+          </div>
+          <div class="summary-item">
+            <span class="label">当前等级:</span>
+            <span class="value" id="current-level">--</span>
+          </div>
+        </div>
+        
+        <div class="rounds-list-wrapper">
+          <h3>历史记录</h3>
+          <div id="rounds-list" class="rounds-list"></div>
+        </div>
+        
+        <div class="history-actions">
+          <button id="btn-clear-history" class="btn btn-danger">🗑️ 清除历史</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+  
+  <!-- 脚本引入 -->
+  <script src="js/core/TileConstants.js"></script>
+  <script src="js/core/MajiangRules.js"></script>
+  <script src="js/core/TileUtils.js"></script>
+  <script src="js/core/TileGenerator.js"></script>
+  <script src="js/core/TileAnalyzer.js"></script>
+  <script src="js/core/ScoringSystem.js"></script>
+  <script src="js/state/GameState.js"></script>
+  <script src="js/ui/TileDisplay.js"></script>
+  <script src="js/ui/AnalysisPanel.js"></script>
+  <script src="js/ui/HistoryPanel.js"></script>
+  <script src="js/storage/StorageManager.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

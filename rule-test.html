@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>规则测试 - 武汉红中赖子杠</title>
+  <style>
+    body {
+      font-family: 'Microsoft YaHei', Arial, sans-serif;
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test-section {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #2c5f2d;
+      border-bottom: 3px solid #97ce4c;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #555;
+      margin-top: 0;
+    }
+    .result {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      background: #f8f9fa;
+    }
+    .success {
+      background: #d4edda;
+      border-left: 4px solid #28a745;
+      padding: 10px;
+    }
+    .warning {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 10px;
+    }
+    .info {
+      background: #d1ecf1;
+      border-left: 4px solid #17a2b8;
+      padding: 10px;
+    }
+    button {
+      background: #2c5f2d;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #97ce4c;
+    }
+    .code {
+      background: #f4f4f4;
+      padding: 10px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎯 武汉红中赖子杠 - 规则系统测试</h1>
+
+  <div class="test-section">
+    <h2>1. 红中规则测试</h2>
+    <button onclick="testZhongRule()">测试红中规则</button>
+    <div id="zhong-result" class="result"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>2. 赖子规则测试</h2>
+    <button onclick="testLaiziRule()">测试赖子规则</button>
+    <div id="laizi-result" class="result"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>3. 258将牌规则测试</h2>
+    <button onclick="test258Jiang()">测试258将牌</button>
+    <div id="jiang-result" class="result"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>4. 开口规则测试</h2>
+    <button onclick="testOpenRule()">测试开口规则</button>
+    <div id="open-result" class="result"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>5. 番数计算测试</h2>
+    <button onclick="testFanshuCalculation()">测试番数计算</button>
+    <div id="fanshu-result" class="result"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>6. 完整场景测试</h2>
+    <button onclick="testFullScenario()">测试完整场景</button>
+    <div id="full-result" class="result"></div>
+  </div>
+
+  <!-- 引入所有JS文件 -->
+  <script src="js/core/TileConstants.js"></script>
+  <script src="js/core/MajiangRules.js"></script>
+  <script src="js/core/TileUtils.js"></script>
+  <script src="js/core/TileGenerator.js"></script>
+  <script src="js/core/TileAnalyzer.js"></script>
+  <script src="js/core/ScoringSystem.js"></script>
+
+  <script>
+    // 测试1：红中规则
+    function testZhongRule() {
+      const result = document.getElementById('zhong-result');
+      result.innerHTML = '<h3>测试结果：</h3>';
+
+      // 测试1.1：检查是否持有红中
+      const handWithZhong = ['wan1', 'wan2', 'wan3', 'zhong', 'tiao5'];
+      const hasZhong = MajiangRules.hasZhong(handWithZhong);
+      result.innerHTML += `<div class="${hasZhong ? 'warning' : 'success'}">
+        持有红中检查: ${hasZhong ? '✅ 检测到红中' : '❌ 未检测到'}
+      </div>`;
+
+      // 测试1.2：红中规则配置
+      const zhongRules = MajiangRules.RULES.ZHONG_RULES;
+      result.innerHTML += `<div class="info">
+        <strong>红中规则配置：</strong><br>
+        - 可以杠牌: ${zhongRules.CAN_GANG ? '✅' : '❌'}<br>
+        - 打出算杠: ${zhongRules.DISCARD_IS_GANG ? '✅' : '❌'}<br>
+        - 持有不能胡: ${zhongRules.HOLD_CANNOT_HU ? '✅' : '❌'}<br>
+        - 杠牌番数: ${zhongRules.GANG_FANSHU}番
+      </div>`;
+
+      // 测试1.3：打牌分析（有红中）
+      const analyzer = new TileAnalyzer();
+      const analysis = analyzer.findBestDiscard(handWithZhong, { hasOpened: false, laiziTile: null });
+      result.innerHTML += `<div class="${analysis.bestDiscard === 'zhong' ? 'success' : 'warning'}">
+        <strong>打牌分析：</strong><br>
+        最佳打牌: <strong>${TileUtils.getTileText(analysis.bestDiscard)}</strong><br>
+        原因: ${analysis.reason}
+      </div>`;
+    }
+
+    // 测试2：赖子规则
+    function testLaiziRule() {
+      const result = document.getElementById('laizi-result');
+      result.innerHTML = '<h3>测试结果：</h3>';
+
+      // 测试2.1：赖子规则配置
+      const laiziRules = MajiangRules.RULES.LAIZI_RULES;
+      result.innerHTML += `<div class="info">
+        <strong>赖子规则配置：</strong><br>
+        - 可作万能牌: ${laiziRules.IS_WILDCARD ? '✅' : '❌'}<br>
+        - 软胡倍数: ×${laiziRules.SOFT_HU_MULTIPLY}<br>
+        - 硬胡倍数: ×${laiziRules.HARD_HU_MULTIPLY}<br>
+        - 可单张杠: ${laiziRules.CAN_SINGLE_GANG ? '✅' : '❌'}<br>
+        - 赖子杠番数: ${laiziRules.GANG_FANSHU}番<br>
+        - 两赖子不能胡小胡: ${laiziRules.TWO_LAIZI_NO_XIAOHU ? '✅' : '❌'}
+      </div>`;
+
+      // 测试2.2：两个赖子
+      const handWithTwoLaizi = ['wan1', 'wan2', 'wan3', 'tong5', 'tong5', 'tiao7', 'tiao8'];
+      const laiziCount = MajiangRules.countLaizi(handWithTwoLaizi, 'tong5');
+      result.innerHTML += `<div class="warning">
+        <strong>赖子数量检查：</strong><br>
+        手牌: ${handWithTwoLaizi.map(t => TileUtils.getTileText(t)).join(' ')}<br>
+        赖子(五筒)数量: ${laiziCount}张<br>
+        ${laiziCount >= 2 ? '⚠️ 两个赖子不能胡小胡，必须打掉一张' : '✅ 赖子数量正常'}
+      </div>`;
+
+      // 测试2.3：打牌分析（有两个赖子）
+      const analyzer = new TileAnalyzer();
+      const analysis = analyzer.findBestDiscard(handWithTwoLaizi, { hasOpened: false, laiziTile: 'tong5' });
+      result.innerHTML += `<div class="success">
+        <strong>打牌分析：</strong><br>
+        最佳打牌: <strong>${TileUtils.getTileText(analysis.bestDiscard)}</strong><br>
+        原因: ${analysis.reason}
+      </div>`;
+    }
+
+    // 测试3：258将牌规则
+    function test258Jiang() {
+      const result = document.getElementById('jiang-result');
+      result.innerHTML = '<h3>测试结果：</h3>';
+
+      // 测试所有牌的将牌判断
+      const testTiles = ['wan2', 'wan5', 'wan8', 'tong3', 'tiao7', 'dong', 'zhong'];
+      result.innerHTML += '<div class="info"><strong>258将牌检查：</strong><br>';
+      testTiles.forEach(tile => {
+        const is258 = MajiangRules.is258Jiang(tile);
+        const canBe = MajiangRules.canBeJiang(tile, 'XIAOHU');
+        result.innerHTML += `${TileUtils.getTileText(tile)}: ${is258 ? '✅ 是258' : '❌ 不是258'} - ${canBe ? '可作将牌' : '不可作将牌'}<br>`;
+      });
+      result.innerHTML += '</div>';
+
+      // 测试大胡例外
+      result.innerHTML += `<div class="success">
+        <strong>大胡例外规则：</strong><br>
+        碰碰胡、清一色、将一色、风一色不受258将牌限制
+      </div>`;
+    }
+
+    // 测试4：开口规则
+    function testOpenRule() {
+      const result = document.getElementById('open-result');
+      result.innerHTML = '<h3>测试结果：</h3>';
+
+      const hand = ['wan1', 'wan2', 'wan3', 'tong5', 'tong6', 'tiao7'];
+      
+      // 测试未开口
+      const checkNotOpened = MajiangRules.canHu(hand, null, false);
+      result.innerHTML += `<div class="${checkNotOpened.canHu ? 'success' : 'warning'}">
+        <strong>未开口状态：</strong><br>
+        可以胡牌: ${checkNotOpened.canHu ? '✅' : '❌'}<br>
+        ${checkNotOpened.checks.map(c => `- ${c.reason}`).join('<br>')}
+      </div>`;
+
+      // 测试已开口
+      const checkOpened = MajiangRules.canHu(hand, null, true);
+      result.innerHTML += `<div class="${checkOpened.canHu ? 'success' : 'warning'}">
+        <strong>已开口状态：</strong><br>
+        可以胡牌: ${checkOpened.canHu ? '✅' : '❌'}<br>
+        ${checkOpened.checks.map(c => `- ${c.reason}`).join('<br>')}
+      </div>`;
+    }
+
+    // 测试5：番数计算
+    function testFanshuCalculation() {
+      const result = document.getElementById('fanshu-result');
+      result.innerHTML = '<h3>测试结果：</h3>';
+
+      // 场景1：小胡，开口一次，自摸
+      const score1 = MajiangRules.calculateFanshu({
+        baseScore: 1,
+        openCount: 1,
+        zhongGang: 0,
+        laiziGang: 0,
+        anGang: 0,
+        mingGang: 0,
+        isHardHu: false,
+        isZimo: true,
+        isDahu: false
+      });
+      result.innerHTML += `<div class="info">
+        <strong>场景1：小胡+开口1次+自摸</strong><br>
+        基础分1 × 开口×2 × 自摸×2 = ${score1}番
+      </div>`;
+
+      // 场景2：硬胡，开口一次，杠红中一次，自摸
+      const score2 = MajiangRules.calculateFanshu({
+        baseScore: 1,
+        openCount: 1,
+        zhongGang: 1,
+        laiziGang: 0,
+        anGang: 0,
+        mingGang: 0,
+        isHardHu: true,
+        isZimo: true,
+        isDahu: false
+      });
+      result.innerHTML += `<div class="success">
+        <strong>场景2：硬胡+开口1次+红中杠+自摸</strong><br>
+        (基础分1 + 红中杠1番) × 开口×2 × 硬胡×2 × 自摸×2 = ${score2}番
+      </div>`;
+
+      // 场景3：大胡，碰碰胡+清一色，硬胡，暗杠一次，自摸
+      const score3 = MajiangRules.calculateFanshu({
+        baseScore: 20, // 两个大胡
+        openCount: 3,
+        zhongGang: 0,
+        laiziGang: 0,
+        anGang: 1,
+        mingGang: 0,
+        isHardHu: true,
+        isZimo: true,
+        isDahu: true
+      });
+      result.innerHTML += `<div class="warning">
+        <strong>场景3：大胡(碰碰胡+清一色)+暗杠+硬胡+开口3次+自摸</strong><br>
+        基础分20 × 开口×2³ × 暗杠×4 × 硬胡×2 × 自摸×1.5 = ${score3}番
+      </div>`;
+    }
+
+    // 测试6：完整场景
+    function testFullScenario() {
+      const result = document.getElementById('full-result');
+      result.innerHTML = '<h3>完整场景测试：</h3>';
+
+      // 场景：手牌中有红中和一个赖子
+      const hand = ['wan1', 'wan2', 'wan3', 'zhong', 'tong5', 'tong6', 'tong6', 'tiao7', 'tiao8', 'dong', 'dong', 'dong', 'bei', 'bei'];
+      const laiziTile = 'tong6';
+
+      result.innerHTML += `<div class="code">
+        <strong>手牌：</strong>${hand.map(t => TileUtils.getTileText(t)).join(' ')}<br>
+        <strong>赖子：</strong>${TileUtils.getTileText(laiziTile)}
+      </div>`;
+
+      // 执行分析
+      const analyzer = new TileAnalyzer();
+      const analysis = analyzer.findBestDiscard(hand, { hasOpened: false, laiziTile });
+
+      // 显示规则检查
+      if (analysis.ruleChecks && analysis.ruleChecks.length > 0) {
+        result.innerHTML += '<div class="info"><strong>规则检查：</strong><br>';
+        analysis.ruleChecks.forEach(check => {
+          const emoji = check.type === 'warning' ? '⚠️' : (check.type === 'success' ? '✅' : 'ℹ️');
+          result.innerHTML += `${emoji} <strong>${check.rule}:</strong> ${check.message}<br>`;
+        });
+        result.innerHTML += '</div>';
+      }
+
+      // 显示最佳打法
+      result.innerHTML += `<div class="success">
+        <strong>最佳打法：</strong>${TileUtils.getTileText(analysis.bestDiscard)}<br>
+        <strong>原因：</strong>${analysis.reason}
+      </div>`;
+
+      // 显示备选方案
+      result.innerHTML += '<div class="info"><strong>备选方案（前5个）：</strong><br>';
+      analysis.alternatives.slice(0, 5).forEach((alt, i) => {
+        result.innerHTML += `${i+1}. ${TileUtils.getTileText(alt.tile)} (评分: ${alt.score.toFixed(1)})<br>`;
+      });
+      result.innerHTML += '</div>';
+    }
+
+    // 页面加载时显示欢迎信息
+    window.onload = function() {
+      console.log('🎯 武汉红中赖子杠规则系统测试页面已加载');
+      console.log('点击各个测试按钮查看规则实现效果');
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>系统测试 - 武汉麻将拆搭训练</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test-item {
+      background: white;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .success { color: #27ae60; }
+    .error { color: #e74c3c; }
+    h1 { color: #2c5f2d; }
+  </style>
+</head>
+<body>
+  <h1>🔧 系统测试页面</h1>
+  <div id="test-results"></div>
+
+  <!-- 加载所有JS文件 -->
+  <script src="js/core/TileConstants.js"></script>
+  <script src="js/core/TileUtils.js"></script>
+  <script src="js/core/TileGenerator.js"></script>
+  <script src="js/core/TileAnalyzer.js"></script>
+  <script src="js/core/ScoringSystem.js"></script>
+  <script src="js/state/GameState.js"></script>
+  <script src="js/ui/TileDisplay.js"></script>
+  <script src="js/ui/AnalysisPanel.js"></script>
+  <script src="js/ui/HistoryPanel.js"></script>
+  <script src="js/storage/StorageManager.js"></script>
+
+  <script>
+    const results = document.getElementById('test-results');
+    
+    function addTest(name, passed, message = '') {
+      const div = document.createElement('div');
+      div.className = 'test-item';
+      div.innerHTML = `
+        <strong>${passed ? '✅' : '❌'}</strong>
+        <span class="${passed ? 'success' : 'error'}">${name}</span>
+        ${message ? `<br><small>${message}</small>` : ''}
+      `;
+      results.appendChild(div);
+    }
+
+    // 测试1: 常量定义
+    try {
+      addTest('TileConstants 加载', 
+        TileConstants && TileConstants.ALL_TILES.length === 34,
+        `牌型数量: ${TileConstants.ALL_TILES.length}`
+      );
+    } catch (e) {
+      addTest('TileConstants 加载', false, e.message);
+    }
+
+    // 测试2: 工具函数
+    try {
+      const parsed = TileUtils.parseTile('wan5');
+      addTest('TileUtils.parseTile', 
+        parsed.suit === 'wan' && parsed.number === 5,
+        `解析结果: suit=${parsed.suit}, number=${parsed.number}`
+      );
+    } catch (e) {
+      addTest('TileUtils.parseTile', false, e.message);
+    }
+
+    // 测试3: 排序功能
+    try {
+      const sorted = TileUtils.sortTiles(['wan3', 'wan1', 'wan2', 'dong']);
+      addTest('TileUtils.sortTiles', 
+        sorted[0] === 'wan1' && sorted[1] === 'wan2',
+        `排序结果: ${sorted.join(', ')}`
+      );
+    } catch (e) {
+      addTest('TileUtils.sortTiles', false, e.message);
+    }
+
+    // 测试4: 牌型生成
+    try {
+      const generator = new TileGenerator();
+      const hand = generator.generateHand({ difficulty: 'medium' });
+      addTest('TileGenerator.generateHand', 
+        hand.length === 13,
+        `生成手牌数量: ${hand.length}, 示例: ${hand.slice(0, 5).join(', ')}...`
+      );
+    } catch (e) {
+      addTest('TileGenerator.generateHand', false, e.message);
+    }
+
+    // 测试5: 摸牌功能
+    try {
+      const generator = new TileGenerator();
+      const tile = generator.drawTile([]);
+      addTest('TileGenerator.drawTile', 
+        tile && typeof tile === 'string',
+        `摸到的牌: ${tile}`
+      );
+    } catch (e) {
+      addTest('TileGenerator.drawTile', false, e.message);
+    }
+
+    // 测试6: 牌型分析
+    try {
+      const analyzer = new TileAnalyzer();
+      const testHand = ['wan1','wan2','wan3','tong4','tong5','tong6','tiao7','tiao8','tiao9','dong','dong','nan','xi','bai'];
+      const result = analyzer.findBestDiscard(testHand);
+      addTest('TileAnalyzer.findBestDiscard', 
+        result.bestDiscard !== null,
+        `最佳打牌: ${result.bestDiscard}, 原因: ${result.reason}`
+      );
+    } catch (e) {
+      addTest('TileAnalyzer.findBestDiscard', false, e.message);
+    }
+
+    // 测试7: 评分系统
+    try {
+      const scoring = new ScoringSystem();
+      const mockSolution = {
+        bestDiscard: 'wan1',
+        score: -50,
+        alternatives: [{tile: 'wan1', score: -50}, {tile: 'wan2', score: -30}],
+        reason: '测试原因'
+      };
+      const result = scoring.scoreChoice('wan1', mockSolution, mockSolution.alternatives);
+      addTest('ScoringSystem.scoreChoice', 
+        result.score === 100,
+        `得分: ${result.score}, 反馈: ${result.feedback}`
+      );
+    } catch (e) {
+      addTest('ScoringSystem.scoreChoice', false, e.message);
+    }
+
+    // 测试8: 游戏状态管理
+    try {
+      const gameState = new GameState();
+      gameState.startNewSession('medium');
+      const state = gameState.getState();
+      addTest('GameState.startNewSession', 
+        state.session.sessionId !== null && state.currentRound.initialHand.length === 13,
+        `会话ID: ${state.session.sessionId}, 手牌数: ${state.currentRound.initialHand.length}`
+      );
+    } catch (e) {
+      addTest('GameState.startNewSession', false, e.message);
+    }
+
+    // 测试9: 存储管理
+    try {
+      const storage = new StorageManager();
+      const mockSession = {
+        sessionId: 'test_123',
+        rounds: [],
+        totalScore: 0
+      };
+      const saved = storage.saveSession(mockSession);
+      const loaded = storage.loadSessions();
+      addTest('StorageManager 读写', 
+        saved && loaded.length > 0,
+        `保存成功: ${saved}, 加载会话数: ${loaded.length}`
+      );
+      // 清理测试数据
+      storage.clearAll();
+    } catch (e) {
+      addTest('StorageManager 读写', false, e.message);
+    }
+
+    // 测试10: 中文显示
+    try {
+      const text = TileUtils.getTileText('wan5');
+      addTest('中文显示', 
+        text === '5万',
+        `万5 显示为: ${text}`
+      );
+    } catch (e) {
+      addTest('中文显示', false, e.message);
+    }
+
+    // 添加总结
+    setTimeout(() => {
+      const summary = document.createElement('div');
+      summary.className = 'test-item';
+      summary.style.background = '#2c5f2d';
+      summary.style.color = 'white';
+      summary.innerHTML = `
+        <h2>测试完成!</h2>
+        <p>✅ 如果所有测试都通过,说明系统正常</p>
+        <p>🎮 现在可以打开 <a href="index.html" style="color: #97ce4c">index.html</a> 开始使用</p>
+      `;
+      results.appendChild(summary);
+    }, 100);
+  </script>
+</body>
+</html>
