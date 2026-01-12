@@ -1,0 +1,307 @@
+/* CustomDialog.css - 自定义对话框样式 */
+
+/* 遮罩层 */
+.custom-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.custom-dialog-overlay.show {
+  opacity: 1;
+}
+
+.custom-dialog-overlay.hidden {
+  display: none;
+}
+
+/* 对话框主体 */
+.custom-dialog {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  border-radius: 16px;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(109, 212, 126, 0.2);
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: hidden;
+  transform: scale(0.9) translateY(-20px);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.custom-dialog.show {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+/* 对话框内容 */
+.custom-dialog-content {
+  padding: 32px;
+  text-align: center;
+}
+
+/* 图标 */
+.dialog-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  animation: iconBounce 0.6s ease;
+}
+
+@keyframes iconBounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* 标题 */
+.dialog-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #f0f0f0;
+  margin-bottom: 16px;
+  letter-spacing: 0.5px;
+}
+
+/* 消息内容 */
+.dialog-message {
+  font-size: 16px;
+  line-height: 1.8;
+  color: #d0d0d0;
+  margin-bottom: 24px;
+  max-height: 50vh;
+  overflow-y: auto;
+  text-align: left;
+  padding: 0 8px;
+}
+
+/* 帮助对话框的消息样式 */
+.dialog-help .dialog-message {
+  text-align: left;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 3px solid #6dd47e;
+}
+
+.dialog-message p {
+  margin-bottom: 12px;
+}
+
+.dialog-message ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.dialog-message li {
+  margin-bottom: 8px;
+  padding-left: 24px;
+  position: relative;
+}
+
+.dialog-message li::before {
+  content: '▸';
+  position: absolute;
+  left: 8px;
+  color: #6dd47e;
+}
+
+.dialog-message strong {
+  color: #6dd47e;
+  font-weight: 600;
+}
+
+/* 滚动条样式 */
+.dialog-message::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dialog-message::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.dialog-message::-webkit-scrollbar-thumb {
+  background: rgba(109, 212, 126, 0.3);
+  border-radius: 3px;
+}
+
+.dialog-message::-webkit-scrollbar-thumb:hover {
+  background: rgba(109, 212, 126, 0.5);
+}
+
+/* 按钮容器 */
+.dialog-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.dialog-buttons .btn {
+  flex: 1;
+  max-width: 150px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.dialog-buttons .btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.dialog-buttons .btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.dialog-buttons .btn:active {
+  transform: scale(0.95);
+}
+
+/* 主要按钮 */
+.dialog-buttons .btn-primary {
+  background: linear-gradient(135deg, #2c5f2d 0%, #6dd47e 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(109, 212, 126, 0.3);
+}
+
+.dialog-buttons .btn-primary:hover {
+  box-shadow: 0 6px 20px rgba(109, 212, 126, 0.5);
+  transform: translateY(-2px);
+}
+
+/* 次要按钮 */
+.dialog-buttons .btn-secondary {
+  background: linear-gradient(135deg, #4a4a4a 0%, #6a6a6a 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dialog-buttons .btn-secondary:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  transform: translateY(-2px);
+}
+
+/* 危险按钮 */
+.dialog-buttons .btn-danger {
+  background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+.dialog-buttons .btn-danger:hover {
+  box-shadow: 0 6px 20px rgba(231, 76, 60, 0.5);
+  transform: translateY(-2px);
+}
+
+/* 不同类型对话框的样式 */
+.dialog-confirm .dialog-icon {
+  color: #5dade2;
+}
+
+.dialog-alert .dialog-icon {
+  color: #6dd47e;
+}
+
+.dialog-error .dialog-icon {
+  color: #e74c3c;
+}
+
+.dialog-help .dialog-icon {
+  color: #ffa726;
+}
+
+.dialog-help .dialog-title {
+  color: #ffa726;
+}
+
+/* 键盘焦点样式 */
+.dialog-buttons .btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(109, 212, 126, 0.3);
+}
+
+/* 响应式设计 */
+@media (max-width: 600px) {
+  .custom-dialog {
+    width: 95%;
+    margin: 0 10px;
+  }
+  
+  .custom-dialog-content {
+    padding: 24px 20px;
+  }
+  
+  .dialog-icon {
+    font-size: 48px;
+  }
+  
+  .dialog-title {
+    font-size: 20px;
+  }
+  
+  .dialog-message {
+    font-size: 14px;
+  }
+  
+  .dialog-buttons {
+    flex-direction: column;
+  }
+  
+  .dialog-buttons .btn {
+    max-width: 100%;
+  }
+}
+
+/* 动画效果 */
+@keyframes dialogSlideIn {
+  from {
+    transform: scale(0.9) translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes dialogSlideOut {
+  from {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.9) translateY(-20px);
+    opacity: 0;
+  }
+}

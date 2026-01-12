@@ -120,8 +120,9 @@ class MajiangTrainingApp {
     });
     
     // 清除历史
-    document.getElementById('btn-clear-history').addEventListener('click', () => {
-      if (confirm('确定要清除所有历史记录吗?')) {
+    document.getElementById('btn-clear-history').addEventListener('click', async () => {
+      const confirmed = await showConfirm('确定要清除所有历史记录吗？', '清除历史记录');
+      if (confirmed) {
         if (this.storageManager.clearAll()) {
           this.showHint('✅ 历史记录已清除', 2000);
           this.historyPanel.hide();
@@ -210,7 +211,7 @@ class MajiangTrainingApp {
   /**
    * 牌被点击
    */
-  onTileClick(tileData) {
+  async onTileClick(tileData) {
     const state = this.gameState.getState();
     
     console.log('👆 点击牌:', tileData);
@@ -226,8 +227,11 @@ class MajiangTrainingApp {
     console.log('✅ 牌已选中');
     
     // 确认打出
-    setTimeout(() => {
-      const confirmResult = confirm(`确定打出 ${TileUtils.getTileText(tileData.tile)} 吗？`);
+    setTimeout(async () => {
+      const confirmResult = await showConfirm(
+        `确定打出 ${TileUtils.getTileText(tileData.tile)} 吗？`,
+        '确认出牌'
+      );
       console.log('💬 用户确认结果:', confirmResult);
       
       if (confirmResult) {
@@ -237,7 +241,7 @@ class MajiangTrainingApp {
           console.log('✅ 打牌成功');
         } catch (error) {
           console.error('❌ 打牌错误:', error);
-          alert(error.message);
+          await showError(error.message, '出牌错误');
           // 出错后取消选中
           this.gameState.selectTile(null);
           console.log('🔄 已取消选中状态（错误）');
@@ -296,53 +300,67 @@ class MajiangTrainingApp {
   /**
    * 显示帮助信息
    */
-  showHelp() {
-    const helpText = `
-🀄 武汉麻将拆搭训练系统使用说明
-
-【训练目标】
-通过反复练习,掌握麻将拆搭技巧,学会识别孤张、边张、中张,理解搭子价值。
-
-【操作流程】
-1. 选择难度等级(简单/中等/困难)
-2. 点击"开始新训练"生成随机牌型
-3. 系统发13张手牌 + 1张摸牌(高亮显示)
-4. 点击"📋 整理手牌"按钮排序手牌
-5. 如果有四张红中,可以点击"🀄 杠红中"重新摸牌
-6. 点击要打出的牌
-7. 查看分析结果,了解最优打法和自己的选择差距
-8. 点击"下一轮"继续训练
-
-【新功能】
-✅ 手牌整理: 将摸牌加入手牌一起排序,方便查看和决策
-🀄 杠红中: 当有四张红中时可以杠牌,杠后重新摸一张牌
-🖼️ PNG图片: 使用高清牌面图片,更加美观
-
-【拆搭原则】
-• 优先打孤张(无相邻牌)
-• 边张(1,2,8,9)进张效率低
-• 保留中张(3-7)和有搭子潜力的牌
-• 单张字牌优先打出
-• 对子和刻子要保留
-
-【评分标准】
-100分: 选择最优解
-80分: 前三名选择
-60分: 合理选择
-40分: 次优选择
-20分: 较差选择
-
-【等级系统】
-平均分90+: 大师🏆
-平均分80+: 高手⭐
-平均分70+: 熟练💎
-平均分60+: 进阶🎯
-其他: 入门📖
-
-加油练习,成为麻将高手! 💪
+  async showHelp() {
+    const helpContent = `
+      <div style="text-align: left; line-height: 1.8;">
+        <h3 style="color: #6dd47e; text-align: center; margin-bottom: 20px;">🀄 武汉麻将拆搭训练系统</h3>
+        
+        <h4 style="color: #6dd47e; margin-top: 20px;">【训练目标】</h4>
+        <p>通过反复练习，掌握麻将拆搭技巧，学会识别孤张、边张、中张，理解搭子价值。</p>
+        
+        <h4 style="color: #6dd47e; margin-top: 20px;">【操作流程】</h4>
+        <ol style="padding-left: 20px;">
+          <li>选择难度等级（简单/中等/困难）</li>
+          <li>点击"开始新训练"生成随机牌型</li>
+          <li>系统发13张手牌 + 1张摸牌（高亮显示）</li>
+          <li>点击"📋 整理手牌"按钮排序手牌</li>
+          <li>如果有四张红中，可以点击"🀄 杠红中"重新摸牌</li>
+          <li>点击要打出的牌</li>
+          <li>查看分析结果，了解最优打法和自己的选择差距</li>
+          <li>点击"下一轮"继续训练</li>
+        </ol>
+        
+        <h4 style="color: #6dd47e; margin-top: 20px;">【新功能】</h4>
+        <ul style="padding-left: 20px;">
+          <li>✅ 手牌整理：将摸牌加入手牌一起排序，方便查看和决策</li>
+          <li>🀄 杠红中：当有四张红中时可以杠牌，杠后重新摸一张牌</li>
+          <li>🖼️ PNG图片：使用高清牌面图片，更加美观</li>
+        </ul>
+        
+        <h4 style="color: #6dd47e; margin-top: 20px;">【拆搭原则】</h4>
+        <ul style="padding-left: 20px;">
+          <li>优先打孤张（无相邻牌）</li>
+          <li>边张（1,2,8,9）进张效率低</li>
+          <li>保留中张（3-7）和有搭子潜力的牌</li>
+          <li>单张字牌优先打出</li>
+          <li>对子和刻子要保留</li>
+        </ul>
+        
+        <h4 style="color: #6dd47e; margin-top: 20px;">【评分标准】</h4>
+        <ul style="padding-left: 20px; list-style: none;">
+          <li>💯 100分：选择最优解</li>
+          <li>⭐ 80分：前三名选择</li>
+          <li>👍 60分：合理选择</li>
+          <li>😐 40分：次优选择</li>
+          <li>😢 20分：较差选择</li>
+        </ul>
+        
+        <h4 style="color: #6dd47e; margin-top: 20px;">【等级系统】</h4>
+        <ul style="padding-left: 20px; list-style: none;">
+          <li>🏆 平均分90+：大师</li>
+          <li>⭐ 平均分80+：高手</li>
+          <li>💎 平均分70+：熟练</li>
+          <li>🎯 平均分60+：进阶</li>
+          <li>📖 其他：入门</li>
+        </ul>
+        
+        <p style="text-align: center; color: #6dd47e; font-weight: bold; margin-top: 20px;">
+          加油练习，成为麻将高手！💪
+        </p>
+      </div>
     `;
     
-    alert(helpText);
+    await showHelp(helpContent, '💡 游戏帮助');
   }
 }
 

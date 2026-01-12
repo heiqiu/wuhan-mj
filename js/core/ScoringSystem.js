@@ -22,8 +22,21 @@ class ScoringSystem {
       comparison: null // 添加详细对比
     };
     
-    // 找到用户选择的排名
-    result.rank = alternatives.findIndex(alt => alt.tile === userChoice) + 1;
+    // 找到用户选择的牌效评分
+    const userAlternative = alternatives.find(alt => alt.tile === userChoice);
+    const userTileScore = userAlternative ? userAlternative.score : Infinity;
+    
+    // 计算并列排名：找出有多少张牌的评分比用户选择的牌更低（更优）
+    // 评分越低越优，所以要统计score < userTileScore的牌的数量
+    const betterTilesCount = alternatives.filter(alt => alt.score < userTileScore).length;
+    result.rank = betterTilesCount + 1;
+    
+    // 检查是否有并列排名
+    const sameTilesCount = alternatives.filter(alt => 
+      alt.score === userTileScore && alt.tile !== userChoice
+    ).length;
+    result.isTied = sameTilesCount > 0;
+    result.tiedCount = sameTilesCount + 1; // 包括用户选择的牌
     
     // 计算分数
     if (userChoice === bestSolution.bestDiscard) {

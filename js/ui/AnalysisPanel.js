@@ -36,7 +36,9 @@ class AnalysisPanel {
     userChoiceTile.appendChild(userTileEl);
     
     document.getElementById('user-choice-rank').textContent = 
-      `排名: 第 ${scoreResult.rank} 位`;
+      scoreResult.isTied 
+        ? `排名: 筬 ${scoreResult.rank} 位（并列 ${scoreResult.tiedCount} 张）`
+        : `排名: 筬 ${scoreResult.rank} 位`;
     
     // 显示最优选择
     const bestChoiceTile = document.getElementById('best-choice-tile');
@@ -369,7 +371,7 @@ class AnalysisPanel {
   }
   
   /**
-   * 渲染备选方案列表
+   * 渲染备选方案列表（并列牌组合在一行）
    */
   renderAlternatives(alternatives) {
     const list = document.getElementById('alternatives-list');
@@ -381,53 +383,137 @@ class AnalysisPanel {
     const maxScore = Math.max(...scores);
     const scoreRange = maxScore - minScore;
     
+    // 将相同分数的牌分组
+    const rankedGroups = [];
+    let currentGroup = [];
+    let previousScore = null;
+    
     alternatives.forEach((alt, index) => {
+      if (previousScore === null || Math.abs(alt.score - previousScore) < 0.001) {
+        // 相同分数，加入当前组
+        currentGroup.push(alt);
+      } else {
+        // 不同分数，开始新组
+        if (currentGroup.length > 0) {
+          rankedGroups.push(currentGroup);
+        }
+        currentGroup = [alt];
+      }
+      previousScore = alt.score;
+    });
+    
+    // 添加最后一组
+    if (currentGroup.length > 0) {
+      rankedGroups.push(currentGroup);
+    }
+    
+    // 渲染每个排名组
+    let currentRank = 1;
+    rankedGroups.forEach((group, groupIndex) => {
       const item = document.createElement('div');
       item.className = 'alternative-item';
+      item.style.display = 'flex';
+      item.style.alignItems = 'center';
+      item.style.marginBottom = '12px';
+      item.style.padding = '10px';
+      item.style.background = 'rgba(30, 30, 30, 0.4)';
+      item.style.borderRadius = '8px';
+      item.style.flexWrap = 'wrap';
       
+      // 排名号
       const rank = document.createElement('span');
       rank.className = 'alternative-rank';
-      rank.textContent = `${index + 1}.`;
+      rank.textContent = `${currentRank}.`;
+      rank.style.minWidth = '30px';
+      rank.style.fontWeight = 'bold';
+      rank.style.fontSize = '16px';
       
-      const tile = this.createTileElement(alt.tile);
-      tile.className = 'tile alternative-tile';
-      
-      const tileText = document.createElement('span');
-      tileText.textContent = TileUtils.getTileText(alt.tile);
-      tileText.style.fontWeight = 'bold';
-      tileText.style.marginLeft = '10px';
-      
-      // 将原始评分转换为用户友好的显示：分数越低的牌越应该打出
-      // 使用倒序映射：排名第一的（分数最低）显示100分
+      // 计算显示分数
       let displayScore;
       if (scoreRange === 0) {
-        displayScore = 50; // 所有牌分数相同
+        displayScore = 50;
       } else {
-        // 线性映射：最低分→100，最高分→0
-        displayScore = 100 - ((alt.score - minScore) / scoreRange * 100);
+        displayScore = 100 - ((group[0].score - minScore) / scoreRange * 100);
       }
-      
-      const score = document.createElement('span');
-      score.className = 'alternative-score';
-      score.textContent = `优先级: ${displayScore.toFixed(0)}`;
       
       // 根据排名设置颜色
-      if (index === 0) {
-        score.style.color = '#6dd47e'; // 绿色 - 最优
-      } else if (index <= 2) {
-        score.style.color = '#5dade2'; // 蓝色 - 较好
-      } else if (index <= 5) {
-        score.style.color = '#f0f0f0'; // 白色 - 一般
+      let rankColor;
+      if (currentRank === 1) {
+        rankColor = '#6dd47e'; // 绿色 - 最优
+        item.style.borderLeft = '3px solid #6dd47e';
+      } else if (currentRank <= 3) {
+        rankColor = '#5dade2'; // 蓝色 - 较好
+        item.style.borderLeft = '3px solid #5dade2';
+      } else if (currentRank <= 5) {
+        rankColor = '#f0f0f0'; // 白色 - 一般
+        item.style.borderLeft = '3px solid #999';
       } else {
-        score.style.color = '#ff8787'; // 红色 - 较差
+        rankColor = '#ff8787'; // 红色 - 较差
+        item.style.borderLeft = '3px solid #ff8787';
       }
+      rank.style.color = rankColor;
       
       item.appendChild(rank);
-      item.appendChild(tile);
-      item.appendChild(tileText);
-      item.appendChild(score);
       
+      // 牌容器（如果有多张并列，排列显示）
+      const tilesContainer = document.createElement('div');
+      tilesContainer.style.display = 'flex';
+      tilesContainer.style.alignItems = 'center';
+      tilesContainer.style.gap = '8px';
+      tilesContainer.style.flexWrap = 'wrap';
+      tilesContainer.style.flex = '1';
+      
+      group.forEach((alt, index) => {
+        const tileWrapper = document.createElement('div');
+        tileWrapper.style.display = 'flex';
+        tileWrapper.style.alignItems = 'center';
+        tileWrapper.style.gap = '4px';
+        
+        const tile = this.createTileElement(alt.tile);
+        tile.className = 'tile alternative-tile';
+        
+        const tileText = document.createElement('span');
+        tileText.textContent = TileUtils.getTileText(alt.tile);
+        tileText.style.fontWeight = 'bold';
+        tileText.style.color = '#f0f0f0';
+        
+        tileWrapper.appendChild(tile);
+        tileWrapper.appendChild(tileText);
+        tilesContainer.appendChild(tileWrapper);
+        
+        // 如果不是最后一张，添加分隔符
+        if (index < group.length - 1) {
+          const separator = document.createElement('span');
+          separator.textContent = '、';
+          separator.style.color = '#999';
+          separator.style.fontSize = '14px';
+          tilesContainer.appendChild(separator);
+        }
+      });
+      
+      item.appendChild(tilesContainer);
+      
+      // 优先级分数
+      const score = document.createElement('span');
+      score.className = 'alternative-score';
+      score.style.color = rankColor;
+      score.style.fontWeight = 'bold';
+      score.style.fontSize = '14px';
+      score.style.whiteSpace = 'nowrap';
+      score.style.marginLeft = '10px';
+      
+      if (group.length > 1) {
+        score.textContent = `优先级: ${displayScore.toFixed(0)} (并列${group.length}张)`;
+        score.title = `这${group.length}张牌的牌效完全相同，打哪张都一样`;
+      } else {
+        score.textContent = `优先级: ${displayScore.toFixed(0)}`;
+      }
+      
+      item.appendChild(score);
       list.appendChild(item);
+      
+      // 下一个排名 = 当前排名 + 当前组的牌数
+      currentRank += group.length;
     });
   }
   
