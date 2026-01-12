@@ -116,33 +116,33 @@ class ScoringSystem {
   generateDetailedComparison(userChoice, bestChoice, detailedAnalysis) {
     const userAnalysis = detailedAnalysis[userChoice];
     const bestAnalysis = detailedAnalysis[bestChoice];
-    
+      
     if (!userAnalysis || !bestAnalysis) {
       return null;
     }
-    
+      
     const comparison = {
       summary: '',
       details: [],
       tips: [], // 添加技巧提示
       conclusion: ''
     };
-    
+      
     // 生成总结
     if (userChoice === bestChoice) {
       comparison.summary = '🎉 你的选择与最优解一致！';
     } else {
       comparison.summary = `🔍 对比分析: ${TileUtils.getTileText(userChoice)} vs ${TileUtils.getTileText(bestChoice)}`;
     }
-    
+      
     // 详细对比各项指标
-    
+      
     // 1. 向听数对比
     if (userAnalysis.shanten !== bestAnalysis.shanten) {
       const diff = userAnalysis.shanten - bestAnalysis.shanten;
       if (diff > 0) {
         comparison.details.push(`⚠️ 向听数: 你的选择${userAnalysis.shanten}向听，最优解${bestAnalysis.shanten}向听，相差${diff}张`);
-        comparison.tips.push('▶ 听牌口诀:“早听要听好、晚听要听早” - 尽量减少向听数');
+        comparison.tips.push('▶ 听牌口诀:"早听要听好、晚听要听早" - 尽量减少向听数');
       } else {
         comparison.details.push(`✅ 向听数: 两者都是${userAnalysis.shanten}向听`);
       }
@@ -154,15 +154,31 @@ class ScoringSystem {
     if (userAnalysis.waitingTiles !== bestAnalysis.waitingTiles) {
       const diff = bestAnalysis.waitingTiles - userAnalysis.waitingTiles;
       if (diff > 0) {
-        comparison.details.push(`⚠️ 进张效率: 你的选择有${userAnalysis.waitingTiles}种有效进张，最优解有${bestAnalysis.waitingTiles}种，多${diff}种`);
-        comparison.tips.push('▶ 拆搭原则:“拆小不拆大” - 优先拆掉进张少的搭子，保留进张多的搭子');
+        // 生成进张列表
+        const userWaitingText = this.formatWaitingTiles(userAnalysis.waitingTilesList);
+        const bestWaitingText = this.formatWaitingTiles(bestAnalysis.waitingTilesList);
+            
+        comparison.details.push(
+          `⚠️ 进张效率: 你的选择有${userAnalysis.waitingTiles}种有效进张，最优解有${bestAnalysis.waitingTiles}种，多${diff}种`
+        );
+        comparison.details.push(`  • 你的进张: ${userWaitingText}`);
+        comparison.details.push(`  • 最优进张: ${bestWaitingText}`);
+        comparison.tips.push('▶ 拆搭原则:"拆小不拆大" - 优先拆掉进张少的搭子，保留进张多的搭子');
       } else if (diff < 0) {
+        const userWaitingText = this.formatWaitingTiles(userAnalysis.waitingTilesList);
         comparison.details.push(`✅ 进张效率: 你的选择更优，有${userAnalysis.waitingTiles}种有效进张`);
+        comparison.details.push(`  • 进张列表: ${userWaitingText}`);
       } else {
+        const userWaitingText = this.formatWaitingTiles(userAnalysis.waitingTilesList);
         comparison.details.push(`✅ 进张效率: 两者相同，均有${userAnalysis.waitingTiles}种有效进张`);
+        comparison.details.push(`  • 进张列表: ${userWaitingText}`);
       }
     } else {
+      const userWaitingText = this.formatWaitingTiles(userAnalysis.waitingTilesList);
       comparison.details.push(`✅ 进张效率: 两者相同，均有${userAnalysis.waitingTiles}种有效进张`);
+      if (userWaitingText) {
+        comparison.details.push(`  • 进张列表: ${userWaitingText}`);
+      }
     }
     
     // 3. 搭子数对比
@@ -213,6 +229,50 @@ class ScoringSystem {
     }
     
     return comparison;
+  }
+  
+  /**
+   * 格式化进张列表，显示具体牌名
+   */
+  formatWaitingTiles(waitingTilesList) {
+    if (!waitingTilesList || waitingTilesList.length === 0) {
+      return '无';
+    }
+    
+    // 按改善程度排序（降序）
+    const sorted = [...waitingTilesList].sort((a, b) => b.improvement - a.improvement);
+    
+    // 按花色分组
+    const grouped = {
+      wan: [],
+      tong: [],
+      tiao: [],
+      feng: []
+    };
+    
+    sorted.forEach(item => {
+      const suit = TileUtils.getTileSuit(item.tile);
+      if (grouped[suit]) {
+        grouped[suit].push(item.tile);
+      }
+    });
+    
+    // 生成文本
+    const parts = [];
+    if (grouped.wan.length > 0) {
+      parts.push(grouped.wan.map(t => TileUtils.getTileText(t)).join('、'));
+    }
+    if (grouped.tong.length > 0) {
+      parts.push(grouped.tong.map(t => TileUtils.getTileText(t)).join('、'));
+    }
+    if (grouped.tiao.length > 0) {
+      parts.push(grouped.tiao.map(t => TileUtils.getTileText(t)).join('、'));
+    }
+    if (grouped.feng.length > 0) {
+      parts.push(grouped.feng.map(t => TileUtils.getTileText(t)).join('、'));
+    }
+    
+    return parts.join(' | ');
   }
   
   /**

@@ -666,8 +666,8 @@ class TileAnalyzer {
     // 计算搭子数（对子+顺子）
     const partnerships = structure.pairs.length + sequences;
     
-    // 计算进张数（简化版）
-    const waitingTiles = this.calculateWaitingTiles(newHand, piziTiles, laiziTiles);
+    // 计算进张数和具体进张列表
+    const waitingInfo = this.calculateWaitingTilesDetailed(newHand, piziTiles, laiziTiles);
     
     // 计算向听数（估算）
     const shanten = this.estimateShanten(newHand, piziTiles, laiziTiles);
@@ -679,19 +679,20 @@ class TileAnalyzer {
       sequences: sequences,                // 顺子数
       pairs: structure.pairs.length,       // 对子数
       triplets: structure.triplets.length, // 刻子数
-      waitingTiles: waitingTiles,          // 进张数
+      waitingTiles: waitingInfo.count,     // 进张数
+      waitingTilesList: waitingInfo.tiles, // 进张列表（详细）
       shanten: shanten,                    // 向听数
       handQuality: this.evaluateHandQuality(newHand, piziTiles, laiziTiles) // 牌型质量
     };
   }
   
   /**
-   * 计算进张数（简化版）
-   * 返回能让手牌改善的牌种数
+   * 计算进张数（详细版）
+   * 返回能让手牌改善的牌种数和具体牌列表
    */
-  calculateWaitingTiles(hand, piziTiles, laiziTiles) {
+  calculateWaitingTilesDetailed(hand, piziTiles, laiziTiles) {
     const allPossibleTiles = TileConstants.ALL_TILES;
-    let waitingCount = 0;
+    const waitingTilesList = [];
     
     // 检查每种可能的牌
     allPossibleTiles.forEach(tile => {
@@ -701,11 +702,17 @@ class TileAnalyzer {
       
       // 如果质量明显提升，认为是有效进张
       if (newQuality > currentQuality + 5) {
-        waitingCount++;
+        waitingTilesList.push({
+          tile: tile,
+          improvement: newQuality - currentQuality
+        });
       }
     });
     
-    return waitingCount;
+    return {
+      count: waitingTilesList.length,
+      tiles: waitingTilesList
+    };
   }
   
   /**
